@@ -34,7 +34,7 @@ type Kafka struct {
 
 func NewConfig(ctx context.Context) (ServiceConfig, error) {
 	activeProfile := strings.TrimSpace(os.Getenv(envActiveProfile))
-	file := "config/.default.env"
+	file := "config/default.env"
 
 	if activeProfile != "" {
 		file = "config/" + activeProfile + ".env"
