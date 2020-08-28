@@ -16,3 +16,5 @@
 
 unit-tests.xml
 cucumber/reports/**
+timestamp-command-service
+.idea
