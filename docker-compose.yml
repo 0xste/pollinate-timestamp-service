@@ -1,6 +1,44 @@
 ---
 version: '3'
 services:
+  # -- service stack --
+  timestamp-command:
+    build: ./timestamp-command-service
+    restart: unless-stopped
+    environment: 
+      SERVER_PORT: 9000
+      LOG_LEVEL: DEBUG
+      KAFKA_BROKER: broker:9092
+      KAFKA_PUBLISH_TOPIC: timestamp.command
+    depends_on: 
+      - broker
+    ports: 
+      - 9000:9000
+
+  # timestamp-consumer:
+  #   build: timestamp-consumer-service/
+  #   restart: unless-stopped
+  #   environment: 
+  #     SERVER_PORT: 9000
+  #     LOG_LEVEL: DEBUG
+  #     KAFKA_BROKER: localhost:9092
+  #     KAFKA_CONSUME_TOPIC: timestamp.command
+  #   depends_on: 
+  #     - broker
+
+  # timestamp-query:
+  #   build: timestamp-query-service/
+  #   restart: unless-stopped
+  #   environment: 
+  #     SERVER_PORT: 9000
+  #     DB_URL: localhost:9092
+  #     # todo migrate to secrets
+  #     url: "jdbc:postgresql://localhost:5432/postgres"
+  #     username: postgres
+  #     password: postgres
+  #   depends_on: 
+  #     - postgres
+
 # -- postgres stack (for dev)
   postgres:
     image: postgres:12.4-alpine
@@ -66,7 +104,7 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-  
+
   kafdrop:
     image: obsidiandynamics/kafdrop
     restart: "no"

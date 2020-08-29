@@ -1,0 +1,22 @@
+server:
+  port: {8080:SERVER_PORT}
+
+management:
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include=*:
+
+kafka:
+  topic: timestamp.command
+
+spring:
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: timestamp-consumer-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+

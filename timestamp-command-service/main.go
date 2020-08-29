@@ -22,6 +22,7 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	log.Println(cfg)
 
 	server := api.NewServer(ctx, cfg)
 	return http.ListenAndServe(":"+cfg.ServerPort, server)

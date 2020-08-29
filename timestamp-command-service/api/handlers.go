@@ -37,11 +37,11 @@ func (s *server) submitTimestampRecord(w http.ResponseWriter, r *http.Request) {
 	} else {
 		s.log.Infof("record published successfully for id: %s", record.String())
 		s.respondJSON(w, http.StatusOK, idResponse{
-			id: record.String(),
+			Id: record.String(),
 		})
 	}
 }
 
 type idResponse struct {
-	id string
+	Id string `json:"id"`
 }
