@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/Shopify/sarama.v1"
 	"net/http"
 	"os"
 	"timestamp-command-service/config"
@@ -24,15 +25,30 @@ func NewServer(ctx context.Context, cfg config.ServiceConfig) *server {
 		logLevel = defaultLogLevel
 	}
 	logger := NewLogrus(logLevel)
+
+	producer, err := newProducer(cfg)
+	if err != nil {
+		logrus.Fatalf("unable to initialise kafka producer %v", err)
+	}
+
 	s := &server{
 		router:           mux.NewRouter(),
 		log:              logger,
-		timestampService: service.NewTimestampService(cfg.Kafka, logger),
+		timestampService: service.NewTimestampService(cfg.Kafka, logger, producer),
 	}
 	s.routes()
 	logger.Info(config.Id(ctx), "Starting HTTP server on :"+cfg.ServerPort)
 	return s
 }
+
+func newProducer(cfg config.ServiceConfig) (sarama.SyncProducer, error) {
+	kafkaConfig := sarama.NewConfig()
+	kafkaConfig.Producer.Retry.Max = 5
+	kafkaConfig.Producer.RequiredAcks = sarama.WaitForAll
+	kafkaConfig.Producer.Return.Successes = true
+	return sarama.NewSyncProducer([]string{cfg.Kafka.Broker}, kafkaConfig)
+}
+
 
 func NewLogrus(level logrus.Level) *logrus.Logger {
 	return &logrus.Logger{

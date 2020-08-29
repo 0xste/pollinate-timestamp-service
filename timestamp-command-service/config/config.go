@@ -21,8 +21,8 @@ type ServiceConfig struct {
 }
 
 type Kafka struct {
-	Broker                         string
-	Topic                          string
+	Broker string
+	Topic  string
 }
 
 func NewConfig(ctx context.Context) (ServiceConfig, error) {
@@ -48,8 +48,8 @@ func LoadFileAsConfig(_ context.Context, file string) (ServiceConfig, error) {
 		LogLevel:   getString("LOG_LEVEL"),
 		ServerPort: getString("SERVER_PORT"),
 		Kafka: Kafka{
-			Topic:                          getString("KAFKA_PUBLISH_TOPIC"),
-			Broker:                         getString("KAFKA_BROKER"),
+			Topic:  getString("KAFKA_PUBLISH_TOPIC"),
+			Broker: getString("KAFKA_BROKER"),
 		},
 	}, nil
 }

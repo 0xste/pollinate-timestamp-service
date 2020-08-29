@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/gofrs/uuid"
-	"github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/Shopify/sarama.v1"
 	"time"
 	"timestamp-command-service/config"
 	"timestamp-command-service/model"
@@ -16,20 +16,16 @@ type TimestampService interface {
 }
 
 type timestampService struct {
-	log         *logrus.Logger
-	kafkaConfig config.Kafka
-	timestampProducer *kafka.Writer
+	log               *logrus.Logger
+	kafkaConfig       config.Kafka
+	timestampProducer sarama.SyncProducer
 }
 
-func NewTimestampService(cfg config.Kafka, logger *logrus.Logger) *timestampService {
+func NewTimestampService(cfg config.Kafka, logger *logrus.Logger, producer sarama.SyncProducer) *timestampService {
 	return &timestampService{
-		log:         logger,
-		kafkaConfig: cfg,
-		timestampProducer: kafka.NewWriter(kafka.WriterConfig{
-			Brokers: []string{cfg.Broker},
-			Topic:   cfg.Topic,
-			Balancer: &kafka.CRC32Balancer{},
-		}),
+		log:               logger,
+		kafkaConfig:       cfg,
+		timestampProducer: producer,
 	}
 }
 
@@ -43,9 +39,8 @@ func (s *timestampService) PublishTimestampRecord(ctx context.Context, timestamp
 		return uuid.Nil, err
 	}
 	payload, err := json.Marshal(model.Timestamp{
-		EventTimestamp:   timestamp,
-		CommandTimestamp: time.Now(),
-		CommandId:        commandId.String(),
+		EventTimestamp: timestamp,
+		CommandId:      commandId.String(),
 	})
 	if err != nil {
 		s.log.Error(err)
@@ -58,14 +53,18 @@ func (s *timestampService) PublishTimestampRecord(ctx context.Context, timestamp
 		return uuid.Nil, err
 	}
 
-	if err := s.timestampProducer.WriteMessages(ctx, kafka.Message{
-		Key:   messageKey.Bytes(),
-		Value: payload,
-	}) ; err != nil{
+	msg := &sarama.ProducerMessage{
+		Key:   sarama.StringEncoder(messageKey.String()),
+		Value: sarama.StringEncoder(payload),
+		Topic: s.kafkaConfig.Topic,
+	}
+	partition, offset, err := s.timestampProducer.SendMessage(msg)
+	if err != nil {
 		s.log.Error(err)
 		return uuid.Nil, err
 	}
 
+	s.log.Infof("message %s published successfully to partition %d with offset %d", messageKey.String(), partition, offset)
+
 	return messageKey, nil
 }
-
