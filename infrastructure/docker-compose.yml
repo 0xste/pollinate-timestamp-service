@@ -43,7 +43,7 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
     ports:
-      - "2181:2181"
+      - "5432:5432"
     
   postgres-admin:
     image: adminer
