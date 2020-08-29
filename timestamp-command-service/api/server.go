@@ -49,7 +49,6 @@ func newProducer(cfg config.ServiceConfig) (sarama.SyncProducer, error) {
 	return sarama.NewSyncProducer([]string{cfg.Kafka.Broker}, kafkaConfig)
 }
 
-
 func NewLogrus(level logrus.Level) *logrus.Logger {
 	return &logrus.Logger{
 		Out:       os.Stderr,
