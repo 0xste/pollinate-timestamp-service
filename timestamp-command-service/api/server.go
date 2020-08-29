@@ -2,13 +2,10 @@ package api
 
 import (
 	"context"
-	"crypto/tls"
 	"github.com/gorilla/mux"
-	"github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
-	"time"
 	"timestamp-command-service/config"
 	"timestamp-command-service/service"
 )
@@ -22,12 +19,6 @@ type server struct {
 }
 
 func NewServer(ctx context.Context, cfg config.ServiceConfig) *server {
-	dialer := &kafka.Dialer{
-		Timeout:   10 * time.Second,
-		DualStack: true,
-		TLS:       &tls.Config{},
-	}
-
 	logLevel, err := logrus.ParseLevel(cfg.LogLevel)
 	if err != nil {
 		logLevel = defaultLogLevel
@@ -36,7 +27,7 @@ func NewServer(ctx context.Context, cfg config.ServiceConfig) *server {
 	s := &server{
 		router:           mux.NewRouter(),
 		log:              logger,
-		timestampService: service.NewTimestampService(cfg.Kafka, logger, dialer),
+		timestampService: service.NewTimestampService(cfg.Kafka, logger),
 	}
 	s.routes()
 	logger.Info(config.Id(ctx), "Starting HTTP server on :"+cfg.ServerPort)

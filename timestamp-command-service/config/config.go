@@ -23,13 +23,6 @@ type ServiceConfig struct {
 type Kafka struct {
 	Broker                         string
 	Topic                          string
-	Username                       string
-	Password                       string
-	CertificateName                string
-	SaslMechanism                  string
-	SecurityProtocol               string
-	CertificateVerification        bool
-	CertificationAuthorityLocation string
 }
 
 func NewConfig(ctx context.Context) (ServiceConfig, error) {
@@ -57,13 +50,6 @@ func LoadFileAsConfig(_ context.Context, file string) (ServiceConfig, error) {
 		Kafka: Kafka{
 			Topic:                          getString("KAFKA_PUBLISH_TOPIC"),
 			Broker:                         getString("KAFKA_BROKER"),
-			Username:                       getString("KAFKA_USERNAME"),
-			Password:                       getString("KAFKA_PASSWORD"),
-			CertificateName:                getString("KAFKA_CERTIFICATE_NAME"),
-			SecurityProtocol:               getString("KAFKA_SECURITY_PROTOCOL"),
-			CertificateVerification:        getBool("KAFKA_SSL_CERTIFICATION_VERIFICATION"),
-			CertificationAuthorityLocation: getString("KAFKA_SSL_CERTIFICATE_AUTHORITY_LOCATION"),
-			SaslMechanism:                  getString("KAFKA_SASL_MECHANISM"),
 		},
 	}, nil
 }

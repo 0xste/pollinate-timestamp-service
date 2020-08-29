@@ -21,7 +21,7 @@ type timestampService struct {
 	timestampProducer *kafka.Writer
 }
 
-func NewTimestampService(cfg config.Kafka, logger *logrus.Logger, dialer *kafka.Dialer) *timestampService {
+func NewTimestampService(cfg config.Kafka, logger *logrus.Logger) *timestampService {
 	return &timestampService{
 		log:         logger,
 		kafkaConfig: cfg,
@@ -29,7 +29,6 @@ func NewTimestampService(cfg config.Kafka, logger *logrus.Logger, dialer *kafka.
 			Brokers: []string{cfg.Broker},
 			Topic:   cfg.Topic,
 			Balancer: &kafka.CRC32Balancer{},
-			Dialer: dialer,
 		}),
 	}
 }
