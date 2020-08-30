@@ -14,7 +14,24 @@ services:
       - broker
     ports: 
       - 7080:7080
-
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+      placement:
+        constraints: [node.role == worker]
+  
   timestamp-consumer:
     build: timestamp-consumer-service/
     restart: unless-stopped
@@ -29,7 +46,24 @@ services:
       DB_PASSWORD: postgres
     depends_on: 
       - broker
-
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+      placement:
+        constraints: [node.role == worker]
+  
   timestamp-query:
     build: timestamp-query-service/
     restart: unless-stopped
@@ -44,7 +78,24 @@ services:
       - postgres
     ports: 
       - 7082:7082
-
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+      placement:
+        constraints: [node.role == worker]
+  
 # -- postgres stack (for dev)
   postgres:
     image: postgres:12.4-alpine
@@ -57,9 +108,8 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-
+    
   pgadmin:
-    container_name: pgadmin_container
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
@@ -72,12 +122,11 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-
+    
 # -- confluent kafka stack --  
   zookeeper:
     image: confluentinc/cp-zookeeper:5.5.1
     hostname: zookeeper
-    container_name: zookeeper
     ports:
       - "2181:2181"
     environment:
@@ -86,11 +135,10 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-
+    
   broker:
     image: confluentinc/cp-kafka:5.5.1
     hostname: broker
-    container_name: broker
     depends_on:
       - zookeeper
     ports:
@@ -101,7 +149,7 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -110,7 +158,7 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-  
+    
   kafdrop:
     image: obsidiandynamics/kafdrop
     restart: "no"
@@ -125,7 +173,7 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-
+    
 # -- misc utils
 
   # only works in swarm mode...
@@ -138,7 +186,7 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-  
+    
   portainer:
     image: portainer/portainer
     command: -H unix:///var/run/docker.sock
@@ -147,5 +195,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
+      mode: replicated
+      replicas: 2
       placement:
         constraints: [node.role == manager]
