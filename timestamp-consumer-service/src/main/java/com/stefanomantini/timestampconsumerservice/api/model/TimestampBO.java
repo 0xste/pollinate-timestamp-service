@@ -8,12 +8,12 @@ import lombok.*;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class TimestampRecord {
+@Builder
+public class TimestampBO {
 
-    @JsonProperty("event_timestamp")
-    private String eventTimestamp;
+  @JsonProperty("event_timestamp")
+  private String eventTimestamp;
 
-    @JsonProperty("command_id")
-    private String commandId;
-
+  @JsonProperty("command_id")
+  private String commandId;
 }

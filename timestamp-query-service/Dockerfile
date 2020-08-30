@@ -8,6 +8,6 @@ RUN ./gradlew build
 FROM openjdk:13-jdk-alpine3.10
 ARG APP_USER=user
 RUN addgroup -S ${APP_USER} && adduser -S ${APP_USER} -G ${APP_USER}
-COPY --from=builder ./build/build/libs/timestamp-query-service.jar ./app.jar
+COPY --from=builder /build/build/libs/timestamp-query-service.jar ./app.jar
 USER ${APP_USER}:${APP_USER}
 ENTRYPOINT java -jar ./app.jar

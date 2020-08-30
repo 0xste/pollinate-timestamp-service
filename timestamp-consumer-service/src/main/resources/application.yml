@@ -1,22 +1,27 @@
 server:
-  port: {8080:SERVER_PORT}
+  port: ${SERVER_PORT:8080}
 
-management:
-  endpoints:
-    web:
-      base-path: /
-      exposure:
-        include=*:
-
+# KAFKA
 kafka:
-  topic: timestamp.command
-
+  topic: ${KAFKA_CONSUMER_TOPIC:timestamp.command}
 spring:
   kafka:
     consumer:
-      bootstrap-servers: localhost:9092
-      group-id: timestamp-consumer-service
+      bootstrap-servers: ${KAFKA_BROKER:localhost:9092}
+      group-id: ${KAFKA_GROUP_ID:timestamp-consumer-service}
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.value.default.type: com.stefanomantini.timestampconsumerservice.api.model.TimestampBO
+        spring.json.trusted.packages: "*"
 
+# DB
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}

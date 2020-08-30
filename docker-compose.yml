@@ -6,38 +6,44 @@ services:
     build: ./timestamp-command-service
     restart: unless-stopped
     environment: 
-      SERVER_PORT: 9000
+      SERVER_PORT: 7080
       LOG_LEVEL: DEBUG
       KAFKA_BROKER: broker:9092
       KAFKA_PUBLISH_TOPIC: timestamp.command
     depends_on: 
       - broker
     ports: 
-      - 9000:9000
+      - 7080:7080
 
-  # timestamp-consumer:
-  #   build: timestamp-consumer-service/
-  #   restart: unless-stopped
-  #   environment: 
-  #     SERVER_PORT: 9000
-  #     LOG_LEVEL: DEBUG
-  #     KAFKA_BROKER: localhost:9092
-  #     KAFKA_CONSUME_TOPIC: timestamp.command
-  #   depends_on: 
-  #     - broker
+  timestamp-consumer:
+    build: timestamp-consumer-service/
+    restart: unless-stopped
+    environment: 
+      SERVER_PORT: 7081
+      LOG_LEVEL: DEBUG
+      KAFKA_BROKER: broker:9092
+      KAFKA_CONSUMER_TOPIC: timestamp.command
+      KAFKA_GROUP_ID: timestamp-consumer-service-1
+      DB_URL: jdbc:postgresql://postgres:5432/postgres
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    depends_on: 
+      - broker
 
-  # timestamp-query:
-  #   build: timestamp-query-service/
-  #   restart: unless-stopped
-  #   environment: 
-  #     SERVER_PORT: 9000
-  #     DB_URL: localhost:9092
-  #     # todo migrate to secrets
-  #     url: "jdbc:postgresql://localhost:5432/postgres"
-  #     username: postgres
-  #     password: postgres
-  #   depends_on: 
-  #     - postgres
+  timestamp-query:
+    build: timestamp-query-service/
+    restart: unless-stopped
+    environment: 
+      SERVER_PORT: 7082
+      DB_URL: postgres:9092
+      # todo migrate to secrets
+      url: jdbc:postgresql://postgres:5432/postgres
+      username: postgres
+      password: postgres
+    depends_on: 
+      - postgres
+    ports: 
+      - 7082:7082
 
 # -- postgres stack (for dev)
   postgres:
@@ -51,7 +57,7 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-  
+
   pgadmin:
     container_name: pgadmin_container
     image: dpage/pgadmin4
@@ -80,7 +86,7 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-  
+
   broker:
     image: confluentinc/cp-kafka:5.5.1
     hostname: broker
@@ -95,7 +101,7 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -104,7 +110,7 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-
+  
   kafdrop:
     image: obsidiandynamics/kafdrop
     restart: "no"
@@ -132,7 +138,7 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-
+  
   portainer:
     image: portainer/portainer
     command: -H unix:///var/run/docker.sock

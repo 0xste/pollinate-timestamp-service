@@ -1,24 +1,33 @@
 package com.stefanomantini.timestampconsumerservice.api.listener;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.stefanomantini.timestampconsumerservice.api.model.TimestampRecord;
+import com.stefanomantini.timestampconsumerservice.api.model.TimestampBO;
+import com.stefanomantini.timestampconsumerservice.service.TimestampService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.kafka.listener.ConsumerSeekAware;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
-
-import java.sql.Time;
-import java.util.Map;
 
 @Slf4j
 @Component
-public class TimestampListener {
+public class TimestampListener implements ConsumerSeekAware {
 
-    @KafkaListener(topics = "timestamp.command", groupId = "timestamp-consumer-service")
-    public void listen(TimestampRecord timestampRecord) {
-        log.info("recieved message on topic msg: {}", timestampRecord.toString());
-    }
+  @Autowired TimestampService timestampService;
 
+  @KafkaListener(topics = "${kafka.topic}")
+  public void listen(
+      TimestampBO timestampBO,
+      @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+      @Header(KafkaHeaders.RECEIVED_PARTITION_ID) Integer partition,
+      @Header(KafkaHeaders.OFFSET) Long offset) {
+    log.debug(
+        "received on topic: {} offset: {} partition: {} msg: {}",
+        topic,
+        offset,
+        partition,
+        timestampBO.toString());
+    timestampService.SubmitTimestamp(timestampBO);
+  }
 }
