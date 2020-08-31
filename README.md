@@ -55,8 +55,8 @@ Notes:
 - **Checking the platform is up**
     - `docker-compose ps`
 - **Further Testing**
-    - Import the postman collection pollinate-timestmap.postman_collection.json
-
+    - Import the postman collection pollinate-timestmap.postman_collection.json to perform some manual tests
+    - A comprehensive acceptance/integration test suite lives in the `./integration` directory, run `go test ./...` to produce output
 
 ### Development
 - **Common Non Functional Requirements**
@@ -130,3 +130,51 @@ Notes:
                 - This api accepts a command-id and is used to validate a successful write to the api
                 - The api is versioned to allow for breaking changes in future
                 - The correlationId header is passed from the client for the purposes of tracing, it is logged out to trace spans
+
+### Disaster Recovery
+
+This solution is predicated on kafka being Highly Available, Fault Tolerant with failover. My reccomendation would be to use a managed-service to operate kafka as is done often to reduce the operational burden of ensuring consistency and availability between nodes.
+
+The DR scenario to be recovered from in the scenario detailed here would be predicated on data in kafka being held as the golden record (see architecture diagram for further detail).
+
+- **Background**:
+    - The postgres DB has been deleted
+    - There were records in the DB that were being used by a downstream system
+    - The DB is not recoverable
+    - Kafka is still Available and consistent
+
+- **Scenario**:
+    - **Setup**
+        - Create 1001 records in the DB
+            - run `go test ./...` in the `./integreation` directory
+        - Query a record in the DB using the query service (baseline)
+            - `curl 'localhost:7082/api/v1/timestamp/{{id}}' \
+    --header 'correlationId: 85464eff-f6f9-4fe5-ab9d-55a259502077'`
+    - **Scenario**
+        - Go to PGAdmin:80 and delete all records in the `postgres` db `public` schema
+            -`TRUNCATE TIMESTAMP_RECORDS`
+    - **Recovery**
+        - modify the `docker-compose.yml` to change the value of the `timestamp-command-service` environment variable `KAFKA_GROUP_ID`, provided to a unique value (increment the number on the end)
+        - Notes: 
+            - This example scenario makes use of the same DB, however would likely be performed on a separate DB, and would work in the same way
+            - There's idempotency checks on the DB to ensure the record can't be re-inserted or upserted
+            - The `KAFKA_GROUP_ID` is being used in the instance that 
+            - All writes must be IDEMPOTENT in the consumer
+            - No retries/deadlettering is considered in this solution, if processing fails, the consumer offset will not be committed and processing will block for all consumers in the same consumer group
+
+
+### Future Improvements
+- Deployments
+    - Migrate away from docker-compose to Helm
+    - Following the convention in main.yml to deploy to minikube for dev
+- Build
+    - Migrate to GitLab CI 
+    - Use the k8s integration for building and deploying
+- Logging/Monitoring
+    - Use injected correlationId in all logs
+    - Make all logs follow same convention
+    - Zipkin/Prometheus for logging
+- Operational Improvements
+    - Implement a spring cloud config server backed by vault
+    - Implement service discovery using consul for intra-service comms
+    - Harden kafka (probably deploy the confluent operator cluster)
