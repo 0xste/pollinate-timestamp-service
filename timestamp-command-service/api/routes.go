@@ -7,17 +7,21 @@ import (
 )
 
 const (
-	pathBase          string = "/api"
-	pathVersion1      string = "/v1"
-	pathPostTimestamp string = "/timestamp/{timestamp}"
+	pathBase              string = "/api"
+	pathVersion1          string = "/v1"
+	pathPostTimestamp     string = "/timestamp/{timestamp}"
+	pathPostTimestampSpec string = "/app"
+	pathHealth string = "/health"
 )
 
 func (s *server) routes() {
-	s.apiMiddleware(s.router)
 	s.apiRoutes()
+	s.apiMiddleware(s.router)
 }
 
 func (s *server) apiRoutes() {
+	s.router.HandleFunc(pathPostTimestampSpec, s.submitTimestampRecord).Methods(http.MethodPost)
+	s.router.HandleFunc(pathHealth, s.health).Methods(http.MethodGet)
 	sub := s.router.PathPrefix(pathBase + pathVersion1).Subrouter()
 	sub.HandleFunc(pathPostTimestamp, s.submitTimestampRecord).Methods(http.MethodPost)
 }

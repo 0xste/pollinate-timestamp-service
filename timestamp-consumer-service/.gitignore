@@ -1,20 +1,33 @@
-command*.out
-*.html
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**
+!**/src/test/**
+/bin
 
-#Logs
-*.log
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
 
-#Binaries
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-
-#Filesystem
-.DS_Store
-
-unit-tests.xml
-cucumber/reports/**
-timestamp-consumer-service
+### IntelliJ IDEA ###
 .idea
+*.iws
+*.iml
+*.ipr
+out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/

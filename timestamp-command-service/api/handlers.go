@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strings"
 	"time"
 	"timestamp-command-service/config"
 )
@@ -23,7 +24,12 @@ func (s *server) submitTimestampRecord(w http.ResponseWriter, r *http.Request) {
 	s.log.Debug(config.Id(r.Context()), "Enter: submitTimestampRecord")
 	defer s.log.Debug(config.Id(r.Context()), "Exit: submitTimestampRecord")
 
-	ts, err := time.Parse(time.RFC3339, mux.Vars(r)["timestamp"])
+	tsString := mux.Vars(r)["timestamp"]
+	if strings.TrimSpace(tsString) == "" {
+		tsString = time.Now().UTC().Format(time.RFC3339)
+	}
+
+	ts, err := time.Parse(time.RFC3339, tsString)
 	if err != nil {
 		s.log.Error(err.Error())
 		s.respondError(w, http.StatusBadRequest, err, fmt.Sprintf("invalid timestamp passed, please use %s", time.RFC3339))
@@ -35,13 +41,16 @@ func (s *server) submitTimestampRecord(w http.ResponseWriter, r *http.Request) {
 		s.respondError(w, http.StatusInternalServerError, err, fmt.Sprintf("failed to publish message"))
 		return
 	} else {
-		s.log.Infof("record published successfully for id: %s", record.String())
 		s.respondJSON(w, http.StatusOK, idResponse{
-			id: record.String(),
+			Id: record.String(),
 		})
 	}
 }
 
+func (s *server) health(w http.ResponseWriter, r *http.Request) {
+	s.respondJSON(w, http.StatusOK, map[string]string{"Status":"UP"})
+}
+
 type idResponse struct {
-	id string
+	Id string `json:"id"`
 }

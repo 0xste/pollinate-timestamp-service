@@ -1,0 +1,181 @@
+{
+	"info": {
+		"_postman_id": "6321b8f1-e8fb-4414-b88c-2247594d9402",
+		"name": "pollinate-timestamp",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "timestamp-command",
+			"item": [
+				{
+					"name": "Create Timestamp Record (Explicit)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "correlationId",
+								"value": "{{$guid}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "localhost:7080/api/v1/timestamp/2006-01-02T15:04:05Z",
+							"host": [
+								"localhost"
+							],
+							"port": "7080",
+							"path": [
+								"api",
+								"v1",
+								"timestamp",
+								"2006-01-02T15:04:05Z"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Timestamp Record (Default)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "correlationId",
+								"value": "{{$guid}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "localhost:7080/app",
+							"host": [
+								"localhost"
+							],
+							"port": "7080",
+							"path": [
+								"app"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "correlationId",
+								"type": "text",
+								"value": "{{$guid}}"
+							}
+						],
+						"url": {
+							"raw": "localhost:7080/health",
+							"host": [
+								"localhost"
+							],
+							"port": "7080",
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "timestamp-consumer",
+			"item": [
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:7081/health",
+							"host": [
+								"localhost"
+							],
+							"port": "7081",
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "timestamp-query",
+			"item": [
+				{
+					"name": "Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:7082/health",
+							"host": [
+								"localhost"
+							],
+							"port": "7082",
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Timestamp Record by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "correlationId",
+								"value": "{{$guid}}",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "localhost:7082/api/v1/timestamp/edd34e6c-63de-46e5-9edd-60b1a1e22892",
+							"host": [
+								"localhost"
+							],
+							"port": "7082",
+							"path": [
+								"api",
+								"v1",
+								"timestamp",
+								"edd34e6c-63de-46e5-9edd-60b1a1e22892"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}

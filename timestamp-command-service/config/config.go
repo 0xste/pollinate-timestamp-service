@@ -33,7 +33,7 @@ func NewConfig(ctx context.Context) (ServiceConfig, error) {
 		file = "config/" + activeProfile + ".env"
 		log.Println(ExtractCorrelationId(ctx), "Profile "+activeProfile+" in use")
 	} else {
-		log.Println(ExtractCorrelationId(ctx), "Profile not set, using default (dev.env)")
+		log.Println(ExtractCorrelationId(ctx), "Profile not set, using default (default.env)")
 	}
 	return LoadFileAsConfig(ctx, file)
 
