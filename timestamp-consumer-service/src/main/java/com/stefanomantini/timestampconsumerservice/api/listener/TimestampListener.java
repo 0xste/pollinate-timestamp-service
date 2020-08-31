@@ -22,12 +22,13 @@ public class TimestampListener implements ConsumerSeekAware {
       @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
       @Header(KafkaHeaders.RECEIVED_PARTITION_ID) Integer partition,
       @Header(KafkaHeaders.OFFSET) Long offset) {
-    log.debug(
-        "received on topic: {} offset: {} partition: {} msg: {}",
+    log.info(
+        "received on topic: {} offset: {} partition: {} command_id: {} timestamp: {}",
         topic,
         offset,
         partition,
-        timestampBO.toString());
+        timestampBO.getCommandId(),
+        timestampBO.getEventTimestamp());
     timestampService.SubmitTimestamp(timestampBO);
   }
 }

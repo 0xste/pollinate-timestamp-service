@@ -64,7 +64,7 @@ func (s *timestampService) PublishTimestampRecord(ctx context.Context, timestamp
 		return uuid.Nil, err
 	}
 
-	s.log.Infof("message %s published successfully to partition %d with offset %d", messageKey.String(), partition, offset)
+	s.log.Infof("message %s published successfully to partition %d with offset %d", commandId.String(), partition, offset)
 
-	return messageKey, nil
+	return commandId, nil
 }

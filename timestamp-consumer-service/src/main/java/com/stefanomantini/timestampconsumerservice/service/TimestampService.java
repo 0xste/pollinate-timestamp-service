@@ -29,7 +29,8 @@ public class TimestampService {
     TimestampEntity saved =
         timestampRepository.saveAndFlush(timestampMapper.timestampBoToEntity(tsrb));
 
-    // retrieve the record saved
+    log.info(tsrb.getCommandId());
+    // retrieve the saved record
     TimestampEntity retrieved = timestampRepository.getOne(saved.getId());
 
     log.info(
