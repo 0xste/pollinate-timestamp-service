@@ -1,15 +1,16 @@
 ---
-version: '3'
+version: '3.4'
 services:
+
   # -- service stack --
   timestamp-command:
     build: ./timestamp-command-service
     restart: unless-stopped
     environment: 
       SERVER_PORT: 7080
-      LOG_LEVEL: DEBUG
-      KAFKA_BROKER: broker:9092
-      KAFKA_PUBLISH_TOPIC: timestamp.command
+      LOG_LEVEL: INFO
+      KAFKA_BROKER: localhost:9092
+      KAFKA_PUBLISH_TOPIC: timestamp.command.v1
     depends_on: 
       - broker
     ports: 
@@ -31,17 +32,18 @@ services:
         window: 60s
       placement:
         constraints: [node.role == worker]
-  
+    network_mode: host
+
   timestamp-consumer:
     build: timestamp-consumer-service/
     restart: unless-stopped
     environment: 
       SERVER_PORT: 7081
       LOG_LEVEL: DEBUG
-      KAFKA_BROKER: broker:9092
-      KAFKA_CONSUMER_TOPIC: timestamp.command
+      KAFKA_BROKER: localhost:9092
+      KAFKA_CONSUMER_TOPIC: timestamp.command.v1
       KAFKA_GROUP_ID: timestamp-consumer-service-1
-      DB_URL: jdbc:postgresql://postgres:5432/postgres
+      DB_URL: jdbc:postgresql://localhost:5432/postgres
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
     depends_on: 
@@ -63,19 +65,19 @@ services:
         window: 60s
       placement:
         constraints: [node.role == worker]
-  
+    network_mode: host
+
   timestamp-query:
     build: timestamp-query-service/
     restart: unless-stopped
     environment: 
       SERVER_PORT: 7082
-      DB_URL: postgres:9092
-      # todo migrate to secrets
-      url: jdbc:postgresql://postgres:5432/postgres
-      username: postgres
-      password: postgres
+      DB_URL: jdbc:postgresql://localhost:5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
     depends_on: 
       - postgres
+      - timestamp-consumer
     ports: 
       - 7082:7082
     deploy:
@@ -95,7 +97,8 @@ services:
         window: 60s
       placement:
         constraints: [node.role == worker]
-  
+    network_mode: host
+
 # -- postgres stack (for dev)
   postgres:
     image: postgres:12.4-alpine
@@ -108,7 +111,8 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-    
+    network_mode: host
+
   pgadmin:
     image: dpage/pgadmin4
     environment:
@@ -122,11 +126,11 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-    
+    network_mode: host
+
 # -- confluent kafka stack --  
   zookeeper:
     image: confluentinc/cp-zookeeper:5.5.1
-    hostname: zookeeper
     ports:
       - "2181:2181"
     environment:
@@ -135,10 +139,10 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-    
+    network_mode: host
+
   broker:
     image: confluentinc/cp-kafka:5.5.1
-    hostname: broker
     depends_on:
       - zookeeper
     ports:
@@ -147,9 +151,9 @@ services:
       - "9101:9101"
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ZOOKEEPER_CONNECT: 'localhost:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -158,14 +162,15 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-    
+    network_mode: host
+
   kafdrop:
     image: obsidiandynamics/kafdrop
     restart: "no"
     ports:
-      - "7071:9000"
+      - "9000:9000"
     environment:
-      KAFKA_BROKERCONNECT: "broker:29092"
+      KAFKA_BROKERCONNECT: "localhost:29092"
       JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
     depends_on:
       - broker
@@ -173,29 +178,21 @@ services:
     deploy:
       placement:
         constraints: [node.role == manager]
-    
+    network_mode: host
+
 # -- misc utils
 
-  # only works in swarm mode...
-  visualizer:
-    image: dockersamples/visualizer:stable
-    ports:
-      - 7073:8080
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    deploy:
-      placement:
-        constraints: [node.role == manager]
-    
-  portainer:
-    image: portainer/portainer
-    command: -H unix:///var/run/docker.sock
-    ports:
-      - 7070:9000
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    deploy:
-      mode: replicated
-      replicas: 2
-      placement:
-        constraints: [node.role == manager]
+  # port collision with kafdrop
+  # portainer: 
+  #   image: portainer/portainer
+  #   command: -H unix:///var/run/docker.sock
+  #   ports:
+  #     - 7070:9000
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   deploy:
+  #     mode: replicated
+  #     replicas: 2
+  #     placement:
+  #       constraints: [node.role == manager]
+  #   network_mode: host

@@ -1,6 +1,12 @@
 server:
   port: ${SERVER_PORT:8080}
 
+management:
+  endpoints:
+    web:
+      base-path: /
+
+
 # KAFKA
 kafka:
   topic: ${KAFKA_CONSUMER_TOPIC:timestamp.command}

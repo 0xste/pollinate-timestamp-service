@@ -1,0 +1,103 @@
+---
+  - hosts: localhost
+    gather_facts: false
+  
+    vars:
+      ansible_python_interpreter: '{{ ansible_playbook_python }}'
+
+      timestamp_command_image: "timestamp-command-service"
+      timestamp_command_port: "8180"
+      timestamp_command_server_port: "{{timestamp_command_port}}"
+      timestamp_command_log_level: DEBUG
+      timestamp_command_kafka_broker: 127.0.0.1:9092
+      timestamp_command_publish_topic: timestamp.command
+
+    pre_tasks:
+      - name: Check Minikube's status.
+        command: minikube status
+        register: minikube_status
+        changed_when: false
+        ignore_errors: true
+  
+      - name: Start Minikube if it's not running.
+        command: minikube start
+        when: "not minikube_status.stdout or 'Running' not in minikube_status.stdout"
+  
+    tasks:
+
+      # Build the timestamp-command Docker image inside Minikube's environment.
+      - name: Get existing timestamp-command hash.
+        shell: |
+          eval $(minikube docker-env)
+          docker images -q {{ timestamp_command_image }}
+        register: image_hash
+        changed_when: false
+  
+      - name: Build image if it's not already built.
+        shell: |
+          eval $(minikube docker-env)
+          pwd
+          ls
+          docker build -t {{ timestamp_command_image }} ./{{ timestamp_command_image }}
+        when: not image_hash.stdout
+  
+      - name: Create a Deployment for timestamp-command.
+        k8s:
+          state: present
+          definition:
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: "{{ timestamp_command_image }}"
+              namespace: default
+            spec:
+              replicas: 1
+              selector:
+                matchLabels:
+                  app: "{{ timestamp_command_image }}"
+              template:
+                metadata:
+                  labels:
+                    app: "{{ timestamp_command_image }}"
+                spec:
+                  containers:
+                  - name: "{{ timestamp_command_image }}"
+                    image: "{{ timestamp_command_image }}"
+                    imagePullPolicy: IfNotPresent
+                    env:
+                      - name: SERVER_PORT
+                        value: "{{timestamp_command_server_port}}"                  
+                      - name: LOG_LEVEL
+                        value: "{{timestamp_command_log_level}}"                  
+                      - name: KAFKA_BROKER
+                        value: "{{timestamp_command_kafka_broker"                  
+                      - name: KAFKA_PUBLISH_TOPIC
+                        value: "{{timestamp_command_publish_topic"                  
+                    ports:
+                      - containerPort: "{{ timestamp_command_port }}"
+      
+      - name: Create a Service for timestamp-command.
+        k8s:
+          state: present
+          definition:
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: "{{ timestamp_command_image }}"
+              namespace: default
+            spec:
+              type: LoadBalancer
+              ports:
+              - port: "{{ timestamp_command_port }}"
+                targetPort: "{{ timestamp_command_port }}"
+              selector:
+                app: "{{ timestamp_command_image }}"
+  
+    post_tasks:
+      - name: Expose {{timestamp_command_image}} on the host via Minikube.
+        command: minikube service {{timestamp_command_image}} --url=true
+        changed_when: false
+        register: minikube_service
+  
+      - debug:
+          msg: "{{ timestamp_command_image }} URL: {{ minikube_service['stdout_lines'][0] }} on {{ timestamp_command_port }}"
